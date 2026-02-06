@@ -24,7 +24,7 @@ runs:
     - name: Prepend Header
       shell: bash
       run: |
-        shopt -s globstar
+        shopt -s globstar;
         HEADER="${{ inputs.text }}"
         PATTERN="${{ inputs.file_pattern }}"
         IGNORESHEBANGS="${{ inputs.ignore_shebangs }}"
