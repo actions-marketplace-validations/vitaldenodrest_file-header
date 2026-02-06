@@ -1,5 +1,11 @@
 name: 'Add File Header'
 description: Add a header (e.g. copyright) at the beginning of files if not already present anywhere in the file.
+author: Vital de Nodrest (@vitaldenodrest)
+
+branding:
+  icon: book-open
+  color: white
+
 inputs:
   text:
     description: The text to insert at the beginning of the files
@@ -11,6 +17,7 @@ inputs:
     description: You can ignore shebangs
     required: false
     default: true
+    
 runs:
   using: 'composite'
   steps:
