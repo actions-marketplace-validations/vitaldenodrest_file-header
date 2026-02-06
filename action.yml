@@ -1,56 +1,60 @@
 name: 'Add File Header'
-description: Add a header (e.g. copyright) at the beginning of files if not already present anywhere in the file.
-author: Vital de Nodrest (@vitaldenodrest)
+description: 'Add a header (e.g. copyright) at the beginning of files if not already present anywhere in the file.'
+author: 'Vital de Nodrest (@vitaldenodrest)'
 
 branding:
-  icon: book-open
-  color: white
+  icon: 'book-open'
+  color: 'white'
 
 inputs:
   text:
-    description: The text to insert at the beginning of the files
+    description: 'The text to insert'
     required: true
   file_pattern:
-    description: The files to target (e.g. '**/*.py')
+    description: 'The files to target (e.g. *.py)'
     required: true
   ignore_shebangs:
-    description: You can ignore shebangs
+    description: 'Insert after shebang if present'
     required: false
-    default: true
-    
+    default: 'true'
+
 runs:
   using: 'composite'
   steps:
     - name: Prepend Header
       shell: bash
       run: |
-        shopt -s globstar;
         HEADER="${{ inputs.text }}"
         PATTERN="${{ inputs.file_pattern }}"
-        IGNORESHEBANGS="${{ inputs.ignore_shebangs }}"
-        # Loop on the files corresponding to the pattern
-        find . -name "$PATTERN" -type f | while read -r file; do
-          echo "Processing $file"
-          # Check whether the header is already in the file
+        IGNORE_SHEBANG="${{ inputs.ignore_shebangs }}"
+
+        # Find relevant files
+        # Avoid .git to keep the index safe
+        find . -name "$PATTERN" -not -path "./.git/*" -type f | while read -r file; do
+          echo "Processing $file..."
+          
+          # Check presence of header in the file
           if grep -qF "$HEADER" "$file"; then
-            echo "Header was present in $file"
+            echo "  -> Header already present. Skipping."
             continue
           fi
-          # Check whether the first line is a shebang
+
           FIRST_LINE=$(head -n 1 "$file")
-          if [[ "$FIRST_LINE" =~ ^#! ]]; then
-            echo "$file has a shebang!"
+
+          if [[ "$IGNORE_SHEBANG" == "true" ]] && [[ "$FIRST_LINE" =~ ^#! ]]; then
+            echo "  -> Shebang detected. Inserting after first line."
             {
               echo "$FIRST_LINE"
               echo -e "$HEADER"
               tail -n +2 "$file"
             } > "$file.tmp" && mv "$file.tmp" "$file"
-          else:
-            echo "$file has no shebang!"
+          else
+            echo "  -> No shebang (or ignored). Inserting at top."
             {
               echo -e "$HEADER"
               cat "$file"
             } > "$file.tmp" && mv "$file.tmp" "$file"
           fi
-          "$file was processed"
+          
+          echo "  -> Done: $file"
         done
