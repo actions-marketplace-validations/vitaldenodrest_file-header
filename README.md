@@ -1,2 +1,2 @@
 # insert
-GitHub action allowing to insert a text at the beginning of files
+GitHub action allowing to insert text at the beginning of files
