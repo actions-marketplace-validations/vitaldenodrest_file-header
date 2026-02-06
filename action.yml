@@ -1,0 +1,49 @@
+name: 'Add File Header'
+description: Add a header (e.g. copyright) at the beginning of files if not already present anywhere in the file.
+inputs:
+  text:
+    description: The text to insert at the beginning of the files
+    required: true
+  file_pattern:
+    description: The files to target (e.g. '**/*.py')
+    required: true
+  ignore_shebangs:
+    description: You can ignore shebangs
+    required: false
+    default: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Prepend Header
+      shell: bash
+      run: |
+        shopt -s globstar
+        HEADER="${{ inputs.text }}"
+        PATTERN="${{ inputs.file_pattern }}"
+        IGNORESHEBANGS="${{ inputs.ignore_shebangs }}"
+        # Loop on the files corresponding to the pattern
+        find . -name "$PATTERN" -type f | while read -r file; do
+          echo "Processing $file"
+          # Check whether the header is already in the file
+          if grep -qF "$HEADER" "$file"; then
+            echo "Header was present in $file"
+            continue
+          fi
+          # Check whether the first line is a shebang
+          FIRST_LINE=$(head -n 1 "$file")
+          if [[ "$FIRST_LINE" =~ ^#! ]]; then
+            echo "$file has a shebang!"
+            {
+              echo "$FIRST_LINE"
+              echo -e "$HEADER"
+              tail -n +2 "$file"
+            } > "$file.tmp" && mv "$file.tmp" "$file"
+          else:
+            echo "$file has no shebang!"
+            {
+              echo -e "$HEADER"
+              cat "$file"
+            } > "$file.tmp" && mv "$file.tmp" "$file"
+          fi
+          "$file was processed"
+        done
